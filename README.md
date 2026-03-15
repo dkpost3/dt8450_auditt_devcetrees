@@ -1,68 +1,6 @@
-# Аудит devicetree для ziyi в ветке bka репозитория kernel_xiaomi_sm8450-devicetrees
-
-## Executive summary
-
-Ветка **bka** в репозитории `kernel_xiaomi_sm8450-devicetrees` (форк) отличается от upstream-базы (`cupid-development/android_kernel_xiaomi_sm8450-devicetrees`, ветка `lineage-22.2`) на **14 коммитов и 16 изменённых файлов**; новых файлов в diff не обнаружено. citeturn16view0
-
-Изменения в bka в основном касаются:
-- обновлений DSI-panel command tables (несколько панелей/устройств, не ziyi), citeturn19view0turn22view0turn23view0turn24view0turn25view0turn29view0  
-- правок devicetree для зарядных схем (ln8000/l9ds_charger) и минорных фиксов (Makefile, debounce), citeturn26view0turn27view0turn30view0turn21view0  
-- корректировки единичных device dtsi (marble/ukee/diting). citeturn18view0turn20view0turn28view0
-
-По **ziyi** (Xiaomi 13 Lite / Civi 2) важно понимать: устройство относится к семейству SM Gen 4, но по SoC это **Snapdragon 7 Gen 1 (SM7450)**, а референс/платформа в tree часто описывается через **diwali** (SM7450). citeturn45search2  
-Поэтому “стек diwali” для ziyi выглядит закономерно даже внутри монорепы “sm8450-devicetrees”.
-
 В ходе аудита ziyi-специфичных DTSI-кусков выявлены 2 приоритетные для фикса проблемы:
 1) **Критично:** `wlan-en-gpio` задан как простое число (`<25>`), тогда как binding CNSS ожидает GPIO-спецификацию (phandle + номер + флаги). Это потенциально ломает включение Wi‑Fi (CNSS/ICNSS). citeturn37view0turn59search4  
 2) **Высоко:** в `diwali-sde-display.dtsi` узел `disp_rdump_region@e1000000` содержит `reg = <0xb8000000 ...>` — несоответствие unit-address и `reg` (dtc warning `unit_address_vs_reg`). Может ломать сборку при “warnings as errors” и путает карту памяти/карваутов. citeturn53view2
-
-Ниже приведены: инвентаризация diff, топология ziyi DT, список проблем с влиянием и точными правками, таблица phandle‑связей, патчи (≤10), и тест‑план.
-
-## База сравнения и инвентаризация изменений ветки bka
-
-### Принятая upstream-база
-
-Так как upstream-репозитории “поставщика” явно не указаны, в качестве upstream принята **родительская репозитория форка**: `cupid-development/android_kernel_xiaomi_sm8450-devicetrees`, ветка `lineage-22.2`. Это соответствует “официальному соседнему vendor dtsi” в экосистеме данного дерева. citeturn1view0turn2view0turn16view0
-
-Локально воспроизвести сравнение можно так:
-
-```bash
-git clone https://github.com/Evolution-X-Devices/kernel_xiaomi_sm8450-devicetrees.git -b bka dt_bka
-cd dt_bka
-git remote add upstream https://github.com/cupid-development/android_kernel_xiaomi_sm8450-devicetrees.git
-git fetch upstream lineage-22.2
-
-# список файлов со статусами
-git diff --name-status upstream/lineage-22.2..HEAD
-
-# полный diff
-git diff upstream/lineage-22.2..HEAD
-```
-
-### Таблица изменённых файлов (bka vs upstream lineage-22.2)
-
-Все перечисленные файлы **существуют в upstream и модифицированы** (статус “modified”). Основание: сравнение показывает 16 changed files. citeturn16view0
-
-| Path | Тип | Краткое описание изменения |
-|---|---|---|
-| `qcom/display/display/diwali-sde-display-idp-overlay.dts` | modified | Добавление/правка свойства в overlay для diwali IDP. citeturn17view0 |
-| `qcom/marble-sm7475.dtsi` | modified | marble: отключение IOMMU в cpufreq‑hw. citeturn18view0 |
-| `qcom/display/display/dsi-panel-m16t-36-02-0a-dsc-vid.dtsi` | modified | marble panels: правки множества команд/параметров (в т.ч. doze). citeturn19view0turn29view0 |
-| `qcom/display/display/dsi-panel-m16t-36-0d-0b-dsc-vid.dtsi` | modified | marble panels: крупные правки команд/параметров и др. citeturn19view0 |
-| `qcom/camera/diting-sm8475-camera-sensor.dtsi` | modified | diting: удалён “l2s camera compatible” как leftover. citeturn20view0 |
-| `qcom/xiaomi-sm7475-common.dtsi` | modified | Увеличен debounce для volumeup. citeturn21view0 |
-| `qcom/xiaomi-sm8450-common.dtsi` | modified | Увеличен debounce для volumeup. citeturn21view0 |
-| `qcom/xiaomi-sm8475-common.dtsi` | modified | Увеличен debounce для volumeup. citeturn21view0 |
-| `qcom/display/display/dsi-panel-l1-38-0c-0a-dsc-cmd.dtsi` | modified | Обновлены DSI команды (OS3.0.2.0.VLECNXM), добавлены последовательности (в т.ч. 0x51). citeturn22view0 |
-| `qcom/display/display/dsi-panel-l2s-38-0c-0a-dsc-cmd.dtsi` | modified | Аналогично: обновлён набор команд, добавлены элементы (в т.ч. 0x51). citeturn23view0 |
-| `qcom/display/display/dsi-panel-l2-38-0c-0a-dsc-cmd.dtsi` | modified | Обновлены команды; добавлен `qcom,mdss-dsi-nolp-command-update = <0x51 2 2>` и правки пакетов. citeturn24view0 |
-| `qcom/display/display/dsi-panel-m11a-42-02-0a-dsc-cmd.dtsi` | modified | Существенно расширены командные таблицы. citeturn25view0 |
-| `qcom/l9ds_charger.dtsi` | modified | Исправлены комментарии про bias (pull-up vs pull-down). citeturn26view0 |
-| `qcom/ln8000.dtsi` | modified | Исправлены комментарии bias + фикc опечатки `pinctrl-0` (было `inctrl-0`). citeturn26view0turn27view0 |
-| `qcom/ukee.dtsi` | modified | GPU: initial pwrlevel = 6. citeturn28view0 |
-| `qcom/Makefile` | modified | Фикс синтаксиса (dtb/dtbo targets). citeturn30view0 |
-
-Вывод для ziyi: **в bka нет прямых коммитов, меняющих ziyi‑специфичный DTSI**, поэтому аудит для ziyi опирается на текущее состояние `qcom/ziyi-sm7450.dtsi` и `qcom/display/display/ziyi-sde-display-idp.dtsi` в bka. citeturn35view0turn37view0
 
 ## Топология devicetree ziyi и связки display↔touch↔thermal↔charger
 
