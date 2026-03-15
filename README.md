@@ -180,25 +180,6 @@ adb shell "dmesg | grep -iE 'cnss|icnss|wlan-en|wlan' | tail -n 200"
 adb shell "getprop | grep -iE 'wlan|wifi' | head"
 ```
 
-### Функциональные сценарии
-
-1) **Panel selection / display modes**  
-   - проверить, что грузится нужная панель (из списка l9s/r66451) и нет циклических probe‑defer’ов;  
-   - вручную прогнать переключение частоты (60/90/120), если поддерживается.
-
-2) **Touch gestures / screen on-off events**  
-   - AOD/Doze: гашение/включение экрана, double-tap-to-wake, single-tap, FOD press (если есть);  
-   - проверить, что тач не “залипает” в активном режиме после screen off (типичная проблема при неверно привязанном panel notifier).
-
-3) **Charger screen**  
-   - cold-boot в зарядке (аккум + зарядка), проверить появление charge animation, отсутствие неожиданных перезагрузок, корректное выключение/включение подсветки.
-
-4) **Thermal sensors / thermal screen integration**  
-   - убедиться, что thermal зоны обновляются и корректно читают датчики (не “0”/“inaccurate”);  
-   - сравнить поведение при нагрузке CPU/GPU и зарядке.
-
-### Критерии “готово”
-
 - DT собирается без критических warning’ов (или вы осознанно их допускаете).  
 - Wi‑Fi поднимается стабильно; нет сообщений о невалидных GPIO для enable.  
 - Touch получает события screen on/off (по dmesg/по факту работы жестов).  
