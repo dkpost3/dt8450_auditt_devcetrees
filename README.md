@@ -1,7 +1,3 @@
-В ходе аудита ziyi-специфичных DTSI-кусков выявлены 2 приоритетные для фикса проблемы:
-1) **Критично:** `wlan-en-gpio` задан как простое число (`<25>`), тогда как binding CNSS ожидает GPIO-спецификацию (phandle + номер + флаги). Это потенциально ломает включение Wi‑Fi (CNSS/ICNSS). citeturn37view0turn59search4  
-2) **Высоко:** в `diwali-sde-display.dtsi` узел `disp_rdump_region@e1000000` содержит `reg = <0xb8000000 ...>` — несоответствие unit-address и `reg` (dtc warning `unit_address_vs_reg`). Может ломать сборку при “warnings as errors” и путает карту памяти/карваутов. citeturn53view2
-
 ## Топология devicetree ziyi и связки display↔touch↔thermal↔charger
 
 ### Как “склеивается” ziyi
