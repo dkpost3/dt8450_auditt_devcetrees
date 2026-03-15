@@ -6,10 +6,10 @@
 
 ### Как “склеивается” ziyi
 
-По содержимому `ziyi-sde-display-idp.dtsi` видно, что он включает базовый стек дисплея `diwali-sde-display.dtsi` и добавляет/оверрайдит панели/питания/rdump, а также связывает панельные phandle-листы с touch/thermal/charge. citeturn35view0turn53view2
+По содержимому `ziyi-sde-display-idp.dtsi` видно, что он включает базовый стек дисплея `diwali-sde-display.dtsi` и добавляет/оверрайдит панели/питания/rdump, а также связывает панельные phandle-листы с touch/thermal/charge.
 
 Ключевые узлы/точки интеграции, которые важны для runtime:
-- `&sde_dsi { qcom,dsi-default-panel = <...>; ... }` — выбор дефолтной панели. citeturn35view0turn53view2  
+- `&sde_dsi { qcom,dsi-default-panel = <...>; ... }` — выбор дефолтной панели.  
 - `&qupv3_se0_spi { synaptics_tcm@0 { panel = <...>; } }` — привязка тач‑контроллера к панели. citeturn35view0turn37view0  
 - `&soc { thermal_screen: thermal-screen { panel = <...>; } charge_screen: charge-screen { panel = <...>; } }` — панельная привязка для thermal и charging‑сценариев. citeturn35view0  
 - `&soc { xiaomi-touch { panel-primary = <...>; } }` — панель для нотификатора тача. citeturn35view0
